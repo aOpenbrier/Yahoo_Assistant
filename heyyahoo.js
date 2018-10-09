@@ -30,23 +30,24 @@ function selectAction(which, what) {
             const title = what.join('+') || 'mr+nobody'
             request(`http://www.omdbapi.com/?apikey=${keys.omdb}&t=${title}`, function (error, response, body) {
                 // If error occured, print the error
-                error && console.log('error:', error);
+                error && console.log('Error:', error);
                 // If response isn't ok, print response
                 response.statusCode !== 200 && console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
                 const json = JSON.parse(body);
                 // If found, print movie info
                 if (json.Response === 'True'){
 
-                    console.log(`Title: ${json.Title} 
-Year: ${elseUnknown(json.Year)}
-IMDB Rating: ${elseUnknown(json.imdbRating)}
-Rotten Tomatoes Rating: ${elseUnknown(
+                    console.log(`
+Title: ${json.Title} 
+Year: ${elseUnavailable(json.Year)}
+IMDB Rating: ${elseUnavailable(json.imdbRating)}
+Rotten Tomatoes Rating: ${elseUnavailable(
 /* uses '&&' to ensure array index 1 exists before trying to read it's property, else javascript error*/
 json.Ratings[1] && json.Ratings[1].Value)}
-Country: ${elseUnknown(json.Country)}
-Language: ${elseUnknown(json.Language)}
-Plot: ${elseUnknown(json.Plot)}
-Actors: ${elseUnknown(json.Actors)}`)
+Country: ${elseUnavailable(json.Country)}
+Language: ${elseUnavailable(json.Language)}
+Plot: ${elseUnavailable(json.Plot)}
+Actors: ${elseUnavailable(json.Actors)}`)
                 }
                 else{
                     console.log('Title not found')
@@ -54,13 +55,22 @@ Actors: ${elseUnknown(json.Actors)}`)
             });
                 break
         case `spotify-this-song`:
-            // TODO
-            //   This will show the following information about the song in your terminal / bash window
-            //      Artist(s)
-            //      The song's name
-            //      A preview link of the song from Spotify
-            //      The album that the song is from
-            //   If no song is provided then your program will default to "The Sign" by Ace of Base.
+            // If no song input, default to "The Sign" by Ace of Base.
+            const trackSearch = what.join(' ') || 'The Sign Ace of Base'
+            spotify.search({ type: 'track', query: trackSearch, limit: 1 }, function (error, data) {
+                // If error, prints error  
+                if (error){
+                    console.log('Error: ' + error);
+                }
+                // print track data
+                else {
+                    console.log(`
+${data.tracks.items[0].name}
+Artist: ${data.tracks.items[0].artists[0].name}
+Album: ${data.tracks.items[0].album.name}
+Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
+                }
+            })
             break
         case 'do-what-it-says':
             fs.readFile('random.txt', 'utf8', function (error, data) {
@@ -94,11 +104,12 @@ Actors: ${elseUnknown(json.Actors)}`)
     }
 }
 
-function elseUnknown(info) {
-    if (info) {
-        return info
+//return string for any values not found
+function elseUnavailable(value) {
+    if (value) {
+        return value
     }
     else{
-        return 'unknown'
+        return 'unavailable'
     }
 }
