@@ -13,17 +13,24 @@ selectAction(process.argv[2], process.argv.slice(3))
 // Search Actions
 function selectAction(which, what) {
     // Remove quotation marks for standard input from CLI or txt file
-    what = what.join(' ')  
+    what = what.join(' ')
     what = what.replace('"', '').replace("'", "")
     what = what.split(' ')
-    
+
     switch (which) {
         case `concert-this`:
-            // TODO
-            //      This will search the Bands in Town Artist Events API(`"https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp"`) for an artist and render the following information about each event to the terminal:
-            //          Name of the venue
-            //          Venue location
-            //      Date of the Event(use moment to format this as "MM/DD/YYYY")
+            request(`https://rest.bandsintown.com/artists/${what.join(' ')}/events?app_id=${keys.bands}`, (error, response, body) => {
+                if (error) { console.log(error) }
+                const jsonConcert = JSON.parse(body)
+                console.log(typeof jsonConcert)
+                if (jsonConcert.length > 0) {
+                    console.log(`
+Artist:  ${jsonConcert[0].lineup}
+Venue:   ${jsonConcert[0].venue.name}
+${jsonConcert[0].venue.city}, ${jsonConcert[0].venue.region && jsonConcert[0].venue.region + ', '}${jsonConcert[0].venue.country}
+Date:    ${moment(jsonConcert[0].datetime).format(`ddd MM/DD/YYYY`)}`)
+                }
+            })
             break
         case `movie-this`:
             //if there's no title input, default to 'Mr nobody'
@@ -35,31 +42,31 @@ function selectAction(which, what) {
                 response.statusCode !== 200 && console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
                 const json = JSON.parse(body);
                 // If found, print movie info
-                if (json.Response === 'True'){
+                if (json.Response === 'True') {
 
                     console.log(`
 Title: ${json.Title} 
 Year: ${elseUnavailable(json.Year)}
 IMDB Rating: ${elseUnavailable(json.imdbRating)}
 Rotten Tomatoes Rating: ${elseUnavailable(
-/* uses '&&' to ensure array index 1 exists before trying to read it's property, else javascript error*/
-json.Ratings[1] && json.Ratings[1].Value)}
+                            /* uses '&&' to ensure array index 1 exists before trying to read it's property, else javascript error*/
+                            json.Ratings[1] && json.Ratings[1].Value)}
 Country: ${elseUnavailable(json.Country)}
 Language: ${elseUnavailable(json.Language)}
 Plot: ${elseUnavailable(json.Plot)}
 Actors: ${elseUnavailable(json.Actors)}`)
                 }
-                else{
+                else {
                     console.log('Title not found')
                 }
             });
-                break
+            break
         case `spotify-this-song`:
             // If no song input, default to "The Sign" by Ace of Base.
             const trackSearch = what.join(' ') || 'The Sign Ace of Base'
             spotify.search({ type: 'track', query: trackSearch, limit: 1 }, function (error, data) {
                 // If error, prints error  
-                if (error){
+                if (error) {
                     console.log('Error: ' + error);
                 }
                 // print track data
@@ -79,7 +86,7 @@ Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
                 // If there is no data, inform user
                 if (data) {
                     //if the file doesn't say to do what is says, which is to do what is says, which is to do what it says, which is...
-                    if (data.split(' ')[0] !== 'do-what-it-says'){
+                    if (data.split(' ')[0] !== 'do-what-it-says') {
                         // Interperet command from text file
                         selectAction(data.split(' ')[0], data.split(' ').slice(1))
                     }
@@ -87,8 +94,8 @@ Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
                         // Don't reach the call stack limit
                         console.log("I would do anything for node, but I won't do that")
                     }
-                    
-                }else{
+
+                } else {
                     console.log('Cannot. File "random.txt" is empty')
                 }
 
@@ -109,7 +116,7 @@ function elseUnavailable(value) {
     if (value) {
         return value
     }
-    else{
+    else {
         return 'unavailable'
     }
 }
