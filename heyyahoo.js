@@ -19,16 +19,29 @@ function selectAction(which, what) {
 
     switch (which) {
         case `concert-this`:
-            request(`https://rest.bandsintown.com/artists/${what.join(' ')}/events?app_id=${keys.bands}`, (error, response, body) => {
-                if (error) { console.log(error) }
+            const bandName = what.join(' ') || 'The Who'
+            request(`https://rest.bandsintown.com/artists/${bandName}/events?app_id=${keys.bands}`, (error, response, body) => {
+                //If there is an error, print it
+                error && console.log('Error: ' + error)
+                // If response isn't ok, print code
+                response.statusCode !== 200 && console.log('Status Code: ' + response.statusCode)
                 const jsonConcert = JSON.parse(body)
-                console.log(typeof jsonConcert)
                 if (jsonConcert.length > 0) {
-                    console.log(`
+                    const concertOutput = `
+~ ~ ~ ~ ~ ~ ~ ~
 Artist:  ${jsonConcert[0].lineup}
 Venue:   ${jsonConcert[0].venue.name}
-${jsonConcert[0].venue.city}, ${jsonConcert[0].venue.region && jsonConcert[0].venue.region + ', '}${jsonConcert[0].venue.country}
-Date:    ${moment(jsonConcert[0].datetime).format(`ddd MM/DD/YYYY`)}`)
+         ${jsonConcert[0].venue.city}, ${jsonConcert[0].venue.region && jsonConcert[0].venue.region + ', '}${jsonConcert[0].venue.country}
+Date:    ${moment(jsonConcert[0].datetime).format(`ddd MM/DD/YYYY`)}
+`
+                    console.log(concertOutput)
+                    // log response to log.txt
+                    fs.appendFile('log.txt', concertOutput, error => { error && console.log(error) })
+                }
+                else {
+                    console.log(`
+No concerts found for ${bandName}
+                    `)
                 }
             })
             break
@@ -37,14 +50,14 @@ Date:    ${moment(jsonConcert[0].datetime).format(`ddd MM/DD/YYYY`)}`)
             const title = what.join('+') || 'mr+nobody'
             request(`http://www.omdbapi.com/?apikey=${keys.omdb}&t=${title}`, function (error, response, body) {
                 // If error occured, print the error
-                error && console.log('Error:', error);
+                error && console.log('Error: ' + error);
                 // If response isn't ok, print response
-                response.statusCode !== 200 && console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+                response.statusCode !== 200 && console.log('Status Code: ' + response.statusCode)
                 const json = JSON.parse(body);
                 // If found, print movie info
                 if (json.Response === 'True') {
-
-                    console.log(`
+                    const movieOutput = `
+~ ~ ~ ~ ~ ~ ~ ~
 Title: ${json.Title} 
 Year: ${elseUnavailable(json.Year)}
 IMDB Rating: ${elseUnavailable(json.imdbRating)}
@@ -54,7 +67,10 @@ Rotten Tomatoes Rating: ${elseUnavailable(
 Country: ${elseUnavailable(json.Country)}
 Language: ${elseUnavailable(json.Language)}
 Plot: ${elseUnavailable(json.Plot)}
-Actors: ${elseUnavailable(json.Actors)}`)
+Actors: ${elseUnavailable(json.Actors)}
+`
+                    console.log(movieOutput)
+                    fs.appendFile('log.txt', movieOutput, error => { error && console.log(error) })
                 }
                 else {
                     console.log('Title not found')
@@ -69,13 +85,18 @@ Actors: ${elseUnavailable(json.Actors)}`)
                 if (error) {
                     console.log('Error: ' + error);
                 }
-                // print track data
                 else {
-                    console.log(`
+                    console.log(data)
+                    const spotifyOutput = `
+~ ~ ~ ~ ~ ~ ~ ~
 ${data.tracks.items[0].name}
 Artist: ${data.tracks.items[0].artists[0].name}
 Album: ${data.tracks.items[0].album.name}
-Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
+Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}
+`
+                    // Print and log results
+                    console.log(spotifyOutput)
+                    fs.appendFile('log.txt', spotifyOutput, error => { error && console.log(error) })
                 }
             })
             break
@@ -85,13 +106,13 @@ Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
                 error && console.log(error)
                 // If there is no data, inform user
                 if (data) {
-                    //if the file doesn't say to do what is says, which is to do what is says, which is to do what it says, which is...
+                    //if the file doesn't say to do what it says, which is to do what is says, which is to do what it says, which is...
                     if (data.split(' ')[0] !== 'do-what-it-says') {
                         // Interperet command from text file
                         selectAction(data.split(' ')[0], data.split(' ').slice(1))
                     }
                     else {
-                        // Don't reach the call stack limit
+                        // print message rather than infinite loop
                         console.log("I would do anything for node, but I won't do that")
                     }
 
@@ -100,13 +121,14 @@ Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}`)
                 }
 
             })
-            // TODO
-            //      Using the `fs` Node package, LIRI will take the text inside of random.txt and then use it to call one of LIRI's commands.
-            //      It should run`spotify-this-song` for "I Want it That Way," as follows the text in `random.txt`.
             break
         default:
-            //TODO
-            //      print correct inputs options
+            console.log(`
+Invalid input. Pass one of the following commands after the filename:
+concert-this <insert artist name>
+movie-this <insert movie title>
+spotify-this-song <insert song title>
+`)
             break
     }
 }
