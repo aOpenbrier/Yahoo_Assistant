@@ -19,7 +19,7 @@ function selectAction(which, what) {
 
     switch (which) {
         case `concert-this`:
-            const bandName = what.join(' ') || 'The Who'
+            const bandName = what.join(' ') || 'New Kids on the Block'
             request(`https://rest.bandsintown.com/artists/${bandName}/events?app_id=${keys.bands}`, (error, response, body) => {
                 //If there is an error, print it
                 error && console.log('Error: ' + error)
@@ -73,7 +73,9 @@ Actors: ${elseUnavailable(json.Actors)}
                     fs.appendFile('log.txt', movieOutput, error => { error && console.log(error) })
                 }
                 else {
-                    console.log('Title not found')
+                    console.log(`
+Title not found
+                    `)
                 }
             });
             break
@@ -86,7 +88,6 @@ Actors: ${elseUnavailable(json.Actors)}
                     console.log('Error: ' + error);
                 }
                 else {
-                    console.log(data)
                     const spotifyOutput = `
 ~ ~ ~ ~ ~ ~ ~ ~
 ${data.tracks.items[0].name}
