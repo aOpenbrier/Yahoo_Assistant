@@ -114,7 +114,9 @@ Preview: ${elseUnavailable(data.tracks.items[0].preview_url)}
                     }
                     else {
                         // print message rather than infinite loop
-                        console.log("I would do anything for node, but I won't do that")
+                        console.log(`
+I would do anything for node, but I won't do that
+`)
                     }
 
                 } else {
